@@ -36,11 +36,11 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           Client_ID: ${{ secrets.Client_ID }}
           Client_Secret: ${{ secrets.Client_Secret }}
-        run: python -m ingestion.fetch_timetables.py
+        run: python -m ingestion.fetch_timetables
 
       - name: Update timetables
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           Client_ID: ${{ secrets.Client_ID }}
           Client_Secret: ${{ secrets.Client_Secret }}
-        run: python -m ingestion.update_timetables.py
+        run: python -m ingestion.update_timetables
