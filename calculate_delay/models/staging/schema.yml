@@ -1,0 +1,18 @@
+version: 1
+
+sources:
+  - name: raw
+    schema: public
+    description: "Raw tables produced by the ingestion GitHub Action from Deutsche Bahn API"
+    tables:
+      - name: raw_timetables
+        description: "Timetable pulled from DB API and stored into Neon"
+
+models:
+  - name: stg_timetables
+    description: "Timetable data enriched with calculated delay"
+    columns:
+      - name: delay
+        description: "Difference between actual time and scheduled time"
+        tests:
+          - not_null
