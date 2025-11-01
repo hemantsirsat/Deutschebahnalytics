@@ -52,4 +52,4 @@ jobs:
           DBT_PASSWORD: ${{ secrets.DBT_PASSWORD }}
           DBT_DBNAME: ${{ secrets.DBT_DBNAME }}
         run: |
-          dbt run --project-dir calculate_delay --full-refresh
+          dbt run --project-dir calculate_delay --profiles-dir calculate_delay --full-refresh
