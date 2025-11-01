@@ -1,5 +1,5 @@
 ---
-name: Fetch and Update Timetables
+name: Fetch and Update Timetables + dbt to calculate delay
 
 on:
     schedule:
@@ -44,3 +44,12 @@ jobs:
           Client_ID: ${{ secrets.Client_ID }}
           Client_Secret: ${{ secrets.Client_Secret }}
         run: python -m ingestion.update_timetables
+
+      - name: Run dbt full-refresh
+        env:
+          DBT_HOST: ${{ secrets.DBT_HOST }}
+          DBT_USER: ${{ secrets.DBT_USER }}
+          DBT_PASSWORD: ${{ secrets.DBT_PASSWORD }}
+          DBT_DBNAME: ${{ secrets.DBT_DBNAME }}
+        run: |
+          dbt run --project-dir calculate_delay --full-refresh
