@@ -2,8 +2,16 @@
 name: Fetch and Update Timetables
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"  # Run every 10 minutes
+    schedule:
+        - cron: "*/10 * * * *"  # Run every 10 minutes
+    workflow_dispatch:
+        inputs:
+            logLevel:
+                description: 'Log level'     
+                required: true
+                default: 'warning'
+            tags:
+                description: 'Test scenario tags' 
 
 jobs:
   ingest:
