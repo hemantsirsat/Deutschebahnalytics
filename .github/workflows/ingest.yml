@@ -1,0 +1,38 @@
+name: Fetch and Update Timetables
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Run every 10 minutes
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Fetch timetables
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          Client_ID: ${{ secrets.Client_ID }}
+          Client_Secret: ${{ secrets.Client_Secret }}
+        run: python -m ingestion.fetch_timetables
+      
+      - name: Update timetables
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          Client_ID: ${{ secrets.Client_ID }}
+          Client_Secret: ${{ secrets.Client_Secret }}
+        run: python -m ingestion.update_timetables
