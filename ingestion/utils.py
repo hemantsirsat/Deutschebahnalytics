@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 STATION_NAMES = ["Hamburg Hbf", "München Hbf", "Köln Hbf", "Berlin Hauptbahnhof", "Braunschweig Hbf"]
 
@@ -12,60 +13,83 @@ def fetch_eva_number(conn, station):
         print(f"Error while fetching eva-number for station {station}. Error: {e}")
     return None
 
-def parse_xml(response, recent_changes = False):
+def parse_db_time(ts):
+    return datetime.strptime(ts, "%y%m%d%H%M") if ts else None
+
+def parse_planned_timetable(response):
 
     root = ET.fromstring(response)
-    records = []
+    stops = {}
 
     for stop in root.findall("s"):
-        s_id = stop.attrib.get("id")
+        service_id = stop.attrib.get("id")
+        stops[service_id] = {}
 
         # Get train info
-        tl = stop.find("tl")
-        train_id = tl.attrib.get("n") if tl is not None else None
-
+        trip_label = stop.find("tl")
+        stops[service_id]["train_category"] = trip_label.attrib.get("c") if trip_label is not None else None
+        stops[service_id]["train_number"] = trip_label.attrib.get("n") if trip_label is not None else None
+        stops[service_id]["train_operator"] = trip_label.attrib.get("o") if trip_label is not None else None
+        
         for ar in stop.findall("ar"):
             try:
-                planned_path = ar.attrib.get("ppth")
-                record = {
-                    "s_id": s_id,
-                    "train_id": train_id,
-                    "planned_path": planned_path,
-                    "type": "arrival",
-                }
-                if not recent_changes:
-                    scheduled_time = ar.attrib.get("pt")
-                    record["scheduled_time"] = scheduled_time
+                try:
+                    stops[service_id]["platform"] = ar.attrib.get("pp")
+                except:
+                    stops[service_id]["platform"] = "NA"
+                try:
+                    stops[service_id]["route_before_arrival"] = ar.attrib.get("ppth")
+                except:
+                    stops[service_id]["route_before_arrival"] = "NA"
 
-                else:
-                    changed_time = ar.attrib.get("ct")
-                    record["actual_time"] = changed_time
-                records.append(record)
+                try:
+                    stops[service_id]["planned_arrival_time"] = parse_db_time(ar.attrib.get("pt"))
+                except:
+                    stops[service_id]["planned_arrival_time"] = "NA"
+
             except Exception as e:
                 print(f"Arrival error. {e}")
-                continue
 
         for dp in stop.findall("dp"):
             try:
-                planned_path = dp.attrib.get("ppth")
-                record = {
-                    "s_id": s_id,
-                    "train_id": train_id,
-                    "planned_path": planned_path,
-                    "type": "departure",
-                }
-                if not recent_changes:
-                    scheduled_time = dp.attrib.get("pt")
-                    record["scheduled_time"] = scheduled_time
-                else:
-                    changed_time = dp.attrib.get("ct")
-                    record["actual_time"] = changed_time
-                records.append(record)
+                try:
+                    stops[service_id]["route_after_departure"] = dp.attrib.get("ppth")
+                except:
+                    stops[service_id]["route_after_departure"] = "NA"
+                try:
+                    stops[service_id]["planned_departure_time"] = parse_db_time(dp.attrib.get("pt"))
+                except:
+                    stops[service_id]["planned_departure_time"] = "NA"
             except Exception as e:
                 print(f"Departure error. {e}")
                 continue
-    return records
+    return stops
 
+def parse_recent_changes(response):
+    root = ET.fromstring(response)
+    stops = {}
+
+    for stop in root.findall("s"):
+        service_id = stop.attrib.get("id")
+        stops[service_id] = {}
+
+        for ar in stop.findall("ar"):
+            try:
+                try:
+                    stops[service_id]["actual_arrival_time"] = ar.attrib.get("ct")
+                except:
+                    stops[service_id]["actual_arrival_time"] = "NA"
+            except Exception as e:
+                print(f"Arrival error. {e}")
+        for dp in stop.findall("dp"):
+            try:
+                try:
+                    stops[service_id]["actual_departure_time"] = dp.attrib.get("ct")
+                except:
+                    stops[service_id]["actual_departure_time"] = "NA"
+            except Exception as e:
+                print(f"Departure error. {e}")
+                continue
 
 # def fetch_states(conn):
 #     try:

@@ -3,7 +3,7 @@ import psycopg
 from dotenv import load_dotenv
 import os
 from datetime import datetime
-from .utils import STATION_NAMES, fetch_eva_number, parse_xml
+from .utils import STATION_NAMES, fetch_eva_number, parse_planned_timetable
 
 load_dotenv()
 
@@ -29,15 +29,37 @@ def fetch_planned_timetable(eva_no,date,hour):
         print(f"Failed for {eva_no}: {response.status_code}")
         return None
     
-def save_to_db(conn, eva_no, time_type, parsed_response):
+def save_to_db(conn, eva_number, stops):
     cur = conn.cursor()
-    for train in parsed_response:
+    for service_id, stop in stops.items():
         cur.execute(
-            f"INSERT INTO raw_timetables \
-            (s_id, train_id, station_id, planned_route, {time_type}, type) \
+            f"INSERT INTO raw_timetable \
+            (\
+                eva_number, \
+                service_id, \
+                train_category, \
+                train_number, \
+                train_operator, \
+                platform, \
+                route_before_arrival, \
+                route_after_departure, \
+                planned_arrival_time, \
+                planned_departure_time \
+            )\
             VALUES \
-            (%s, %s, %s, %s, %s, %s)",
-            (train["s_id"], train["train_id"], eva_no, train["planned_path"], train[time_type], train["type"])
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (
+                eva_number,
+                service_id,
+                stop["train_category"],
+                stop["train_number"],
+                stop["train_operator"],
+                stop["platform"],
+                stop["route_before_arrival"],
+                stop["route_after_departure"],
+                stop["planned_arrival_time"],
+                stop["planned_departure_time"],             
+            )
         )
         conn.commit()
     cur.close()
@@ -56,8 +78,8 @@ def main():
 
         # Fetch planned timetable
         planned_trips = fetch_planned_timetable(eva_number,date_str,hour_str)
-        parsed_planned_response = parse_xml(planned_trips)
-        save_to_db(conn, eva_number, "scheduled_time", parsed_planned_response)
+        parsed_planned_response = parse_planned_timetable(planned_trips)
+        save_to_db(conn, eva_number, parsed_planned_response)
 
     conn.close()
 

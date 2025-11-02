@@ -2,7 +2,7 @@ import requests
 import psycopg
 from dotenv import load_dotenv
 import os
-from .utils import STATION_NAMES, fetch_eva_number, parse_xml
+from .utils import STATION_NAMES, fetch_eva_number, parse_recent_changes
 
 load_dotenv()
 
@@ -27,13 +27,14 @@ def fetch_recent_changes(eva_no):
         print(f"Failed for {eva_no}: {response.status_code}")
         return None
 
-def update_db(conn, eva_no, parsed_response):
+def update_db(conn, eva_number, stops):
     cur = conn.cursor()
-    for train in parsed_response:
+    for service_id, stop in stops.items():
         cur.execute(
             "UPDATE raw_timetables \
-            SET actual_time = %s Where (s_id = %s AND type = %s AND station_id = %s)",
-            (train["actual_time"], train["s_id"], train["type"], eva_no)
+            SET (actual_arrival_time = %s AND actual_departure_time = %s) \
+            Where (service_id = %s AND station_id = %s)",
+            (stop["actual_arrival_time"], stop["actual_departure_time"], service_id, eva_number)
         )
         conn.commit()
     cur.close()
@@ -48,7 +49,7 @@ def main():
 
         # Fetch recent changes
         recent_changes = fetch_recent_changes(eva_number)
-        parsed_recent_changes = parse_xml(recent_changes, True)
+        parsed_recent_changes = parse_recent_changes(recent_changes)
         update_db(conn, eva_number, parsed_recent_changes)
 
     conn.close()
