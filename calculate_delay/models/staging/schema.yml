@@ -5,7 +5,7 @@ sources:
     schema: public
     description: "Raw tables produced by the ingestion GitHub Action from Deutsche Bahn API"
     tables:
-      - name: raw_timetables
+      - name: raw_timetable
         description: "Timetable pulled from DB API and stored into Neon"
 
 models:
