@@ -32,9 +32,9 @@ def update_db(conn, eva_number, stops):
     for service_id, stop in stops.items():
         cur.execute(
             "UPDATE raw_timetable \
-            SET (actual_arrival_time = %s AND actual_departure_time = %s) \
-            Where (service_id = %s AND station_id = %s)",
-            (stop["actual_arrival_time"], stop["actual_departure_time"], service_id, eva_number)
+            SET actual_arrival_time = %s, actual_departure_time = %s \
+            Where (service_id = %s AND eva_number = %s)",
+            (stop["actual_arrival_time"], stop["actual_departure_time"], service_id, str(eva_number))
         )
         conn.commit()
     cur.close()
