@@ -1,7 +1,19 @@
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-STATION_NAMES = ["Hamburg Hbf", "München Hbf", "Köln Hbf", "Berlin Hauptbahnhof", "Braunschweig Hbf"]
+STATION_NAMES = [
+    "Hamburg Hbf", 
+    "Frankfurt (Main) Hbf", 
+    "München Hbf", "Köln Hbf", 
+    "Berlin Hauptbahnhof", 
+    "Düsseldorf Hbf", 
+    "Hannover Hbf", 
+    "Stuttgart Hbf",
+    "Leipzig Hbf",
+    "Dresden Hbf",
+    "Berlin Friedrichstraße",
+    "Braunschweig Hbf"
+]
 
 def fetch_eva_number(conn, station):
     try:
