@@ -79,7 +79,6 @@ def main():
         # Fetch planned timetable
         planned_trips = fetch_planned_timetable(eva_number,date_str,hour_str)
         parsed_planned_response = parse_planned_timetable(planned_trips)
-        print(parsed_planned_response)
         save_to_db(conn, eva_number, parsed_planned_response)
 
     conn.close()
