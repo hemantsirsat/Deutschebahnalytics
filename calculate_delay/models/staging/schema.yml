@@ -7,6 +7,8 @@ sources:
     tables:
       - name: raw_timetable
         description: "Timetable pulled from DB API and stored into Neon"
+      - name: raw_stations
+        description: "Station metadata table containing station names and EVA numbers"
 
 models:
   - name: stg_timetables
