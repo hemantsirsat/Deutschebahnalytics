@@ -1,0 +1,31 @@
+name: Fetch Timetables
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # Every hour at :00
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch timetables
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          Client_ID: ${{ secrets.Client_ID }}
+          Client_Secret: ${{ secrets.Client_Secret }}
+        run: python -m ingestion.fetch_timetables

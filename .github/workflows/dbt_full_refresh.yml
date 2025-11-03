@@ -1,0 +1,32 @@
+name: Run dbt Full-Refresh
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"  # Every 3 hours at :00
+  workflow_dispatch:
+
+jobs:
+  dbt_full_refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install dbt-core dbt-postgres  # or requirements.txt if included
+
+      - name: Run dbt full-refresh
+        env:
+          DBT_HOST: ${{ secrets.DBT_HOST }}
+          DBT_USER: ${{ secrets.DBT_USER }}
+          DBT_PASSWORD: ${{ secrets.DBT_PASSWORD }}
+          DBT_DBNAME: ${{ secrets.DBT_DBNAME }}
+        run: |
+          dbt run --project-dir calculate_delay --profiles-dir calculate_delay --full-refresh
