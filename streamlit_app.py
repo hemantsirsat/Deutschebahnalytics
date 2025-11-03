@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 conn_string = os.getenv('DATABASE_URL')
-
+if not conn_string:
+    st.error("DATABASE_URL environment variable not found!")
+    st.stop()
 # -----------------------------
 # Database connection
 # -----------------------------
