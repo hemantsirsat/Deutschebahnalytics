@@ -7,10 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DBT_HOST=os.getenv("DBT_HOST")
-DBT_USER=os.getenv("DBT_USER")
-DBT_PASSWORD=os.getenv("DBT_PASSWORD")
-DBT_DBNAME=os.getenv("DBT_DBNAME")
+conn_string = os.getenv('DATABASE_URL')
 
 # -----------------------------
 # Database connection
@@ -18,11 +15,7 @@ DBT_DBNAME=os.getenv("DBT_DBNAME")
 @st.cache_data(ttl=600)
 def load_data():
     conn = psycopg.connect(
-        host=DBT_HOST,
-        dbname=DBT_DBNAME,
-        user=DBT_USER,
-        password=DBT_PASSWORD,
-        port=5432
+        conn_string
     )
     query = "SELECT * FROM fct_train_delay_summary"
     df = pd.read_sql(query, conn)
