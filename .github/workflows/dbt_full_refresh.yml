@@ -2,7 +2,7 @@ name: Run dbt Full-Refresh
 
 on:
   schedule:
-    - cron: "0 */3 * * *"  # Every 3 hours at :00
+    - cron: "*/30 * * * *" 
   workflow_dispatch:
 
 jobs:
