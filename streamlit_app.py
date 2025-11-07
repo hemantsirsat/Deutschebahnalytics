@@ -4,6 +4,7 @@ import pandas as pd
 import psycopg
 import plotly.express as px
 from dotenv import load_dotenv
+from ingestion.utils import STATION_NAMES
 
 # -----------------------------
 # Load environment variables
@@ -27,6 +28,28 @@ def load_data(table_name):
     conn = psycopg.connect(conn_string)
     query = f"SELECT * FROM {table_name}"
     df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
+@st.cache_data(ttl=600)
+def load_station_day_hour_data(selected_date, selected_station):
+    """
+    Load daily hourly delay data for a specific station and date from fct_station_day_hour_summary.
+    The cache refreshes every 10 minutes (600 seconds).
+    """
+    conn = psycopg.connect(conn_string)
+    query = """
+        SELECT 
+            date, 
+            hour, 
+            station_name, 
+            avg_arrival_delay_min, 
+            avg_departure_delay_min
+        FROM fct_station_day_hour_summary
+        WHERE date = %s AND station_name = %s
+        ORDER BY hour
+    """
+    df = pd.read_sql(query, conn, params=(selected_date, selected_station))
     conn.close()
     return df
 
@@ -468,6 +491,107 @@ if not df_category_data.empty:
     - **Average Delays per Category:** {int(total_all_delays / len(df_category_data)):.0f} events
     """
     st.markdown(conclusion_freq)
+
+# -----------------------------
+# Daily Station Delay Analysis
+# -----------------------------
+st.header("📅 Daily Station Delay Analysis")
+
+st.markdown("""
+This section allows you to explore **hourly delay patterns** for a specific station on a selected date.  
+Choose a date and station to view how delays vary throughout the day.
+""")
+
+# Create two columns for date and station selection
+col1, col2 = st.columns(2)
+
+with col1:
+    selected_date = st.date_input(
+        "Select Date",
+        value=pd.Timestamp.now().date(),
+        help="Choose a date to analyze delays"
+    )
+
+with col2:
+    selected_station = st.selectbox(
+        "Select Station",
+        options=STATION_NAMES,
+        help="Choose a station from the list"
+    )
+
+# Fetch and display data
+try:
+    df_station_day_hour = load_station_day_hour_data(selected_date, selected_station)
+    
+    if df_station_day_hour.empty:
+        st.warning(f"No data available for {selected_station} on {selected_date}. Please select a different date or station.")
+    else:
+        # Display data table
+        st.subheader(f"Hourly Delays for {selected_station} on {selected_date}")
+        st.dataframe(df_station_day_hour, use_container_width=True)
+        
+        # Create bar chart for average delays by hour
+        fig_daily = px.bar(
+            df_station_day_hour,
+            x="hour",
+            y=["avg_arrival_delay_min", "avg_departure_delay_min"],
+            barmode="group",
+            labels={
+                "hour": "Hour of Day",
+                "value": "Average Delay (min)",
+                "variable": "Delay Type",
+                "avg_arrival_delay_min": "Average Arrival Delay (minutes)",
+                "avg_departure_delay_min": "Average Departure Delay (minutes)"
+            },
+            title=f"Hourly Average Delays - {selected_station} ({selected_date})",
+            color_discrete_map={
+                "avg_arrival_delay_min": "#636EFA",
+                "avg_departure_delay_min": "#EF553B"
+            }
+        )
+        
+        fig_daily.update_layout(
+            xaxis=dict(
+                tickmode="linear",
+                dtick=1,
+                title="Hour of Day (0-23)"
+            ),
+            yaxis_title="Average Delay (minutes)",
+            legend_title="Delay Type",
+            height=500,
+            hovermode="x unified"
+        )
+        
+        st.plotly_chart(fig_daily, use_container_width=True)
+        
+        # Display insights
+        st.subheader("📊 Insights")
+        if not df_station_day_hour.empty:
+            max_arrival_delay = df_station_day_hour['avg_arrival_delay_min'].max()
+            min_arrival_delay = df_station_day_hour['avg_arrival_delay_min'].min()
+            max_departure_delay = df_station_day_hour['avg_departure_delay_min'].max()
+            min_departure_delay = df_station_day_hour['avg_departure_delay_min'].min()
+            
+            max_arrival_hour = df_station_day_hour[df_station_day_hour['avg_arrival_delay_min'] == max_arrival_delay]['hour'].values[0]
+            min_arrival_hour = df_station_day_hour[df_station_day_hour['avg_arrival_delay_min'] == min_arrival_delay]['hour'].values[0]
+            max_departure_hour = df_station_day_hour[df_station_day_hour['avg_departure_delay_min'] == max_departure_delay]['hour'].values[0]
+            min_departure_hour = df_station_day_hour[df_station_day_hour['avg_departure_delay_min'] == min_departure_delay]['hour'].values[0]
+            
+            avg_arrival = df_station_day_hour['avg_arrival_delay_min'].mean()
+            avg_departure = df_station_day_hour['avg_departure_delay_min'].mean()
+            
+            insights_daily = f"""
+            - **Peak Arrival Delay:** {max_arrival_delay:.1f} min at {int(max_arrival_hour)}:00
+            - **Best Arrival Performance:** {min_arrival_delay:.1f} min at {int(min_arrival_hour)}:00
+            - **Peak Departure Delay:** {max_departure_delay:.1f} min at {int(max_departure_hour)}:00
+            - **Best Departure Performance:** {min_departure_delay:.1f} min at {int(min_departure_hour)}:00
+            - **Average Arrival Delay:** {avg_arrival:.1f} min
+            - **Average Departure Delay:** {avg_departure:.1f} min
+            """
+            st.markdown(insights_daily)
+            
+except Exception as e:
+    st.error(f"Error loading data: {str(e)}")
 
 # -----------------------------
 # Closing Section
