@@ -1,5 +1,6 @@
 import requests
 import psycopg
+from psycopg.rows import tuple_row
 from dotenv import load_dotenv
 import os
 from datetime import datetime
@@ -30,39 +31,40 @@ def fetch_planned_timetable(eva_no,date,hour):
         return None
     
 def save_to_db(conn, eva_number, stops):
-    cur = conn.cursor()
+    data = []
     for service_id, stop in stops.items():
-        cur.execute(
-            f"INSERT INTO raw_timetable \
-            (\
-                eva_number, \
-                service_id, \
-                train_category, \
-                train_number, \
-                train_operator, \
-                platform, \
-                route_before_arrival, \
-                route_after_departure, \
-                planned_arrival_time, \
-                planned_departure_time \
-            )\
-            VALUES \
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (
-                eva_number,
-                service_id,
-                stop["train_category"],
-                stop["train_number"],
-                stop["train_operator"],
-                stop["platform"],
-                stop["route_before_arrival"],
-                stop["route_after_departure"],
-                stop["planned_arrival_time"],
-                stop["planned_departure_time"],             
-            )
+        data.append((
+            eva_number,
+            service_id,
+            stop["train_category"],
+            stop["train_number"],
+            stop["train_operator"],
+            stop["platform"],
+            stop["route_before_arrival"],
+            stop["route_after_departure"],
+            stop["planned_arrival_time"],
+            stop["planned_departure_time"],  
+        ))
+
+    insert_query = """
+        INSERT INTO raw_timetable (
+            eva_number,
+            service_id,
+            train_category,
+            train_number,
+            train_operator,
+            platform,
+            route_before_arrival,
+            route_after_departure,
+            planned_arrival_time,
+            planned_departure_time
         )
-        conn.commit()
-    cur.close()
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (eva_number, service_id, train_category, train_number, train_operator, platform, route_before_arrival, route_after_departure, planned_arrival_time, planned_departure_time) DO NOTHING;
+    """
+    with conn.cursor() as cur:
+        cur.executemany(insert_query, data)
+    conn.commit()
 
 def main():
     conn = psycopg.connect(conn_string)
