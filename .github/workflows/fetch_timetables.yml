@@ -2,7 +2,7 @@ name: Fetch Timetables
 
 on:
   schedule:
-    - cron: "0 * * * *"  # Every hour at :00
+    - cron: "*/20 * * * *"  # Every 20 minutes
   workflow_dispatch:
 
 jobs:
