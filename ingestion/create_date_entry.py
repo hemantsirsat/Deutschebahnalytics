@@ -1,6 +1,6 @@
 import os
 import psycopg
-from datetime import datetime, date
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,7 +16,7 @@ def save_to_db(conn, date):
 def main():
     conn = psycopg.connect(conn_string)
     # Fetch current date
-    dt = date(2025, 11, 6)
+    dt = datetime.now().date()
 
     save_to_db(conn, dt)
     conn.close()
