@@ -1,6 +1,5 @@
 import requests
 import psycopg
-from psycopg.rows import tuple_row
 from dotenv import load_dotenv
 import os
 from datetime import datetime
