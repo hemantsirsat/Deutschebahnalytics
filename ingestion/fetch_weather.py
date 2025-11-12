@@ -75,9 +75,11 @@ def save_to_db(conn, data):
             wind,
             condition,
             visibility,
-            record_time
+            record_time,
+            date
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (station_name, hour, date) DO NOTHING;
     """
     with conn.cursor() as cur:
         cur.executemany(insert_query, data)
@@ -102,7 +104,8 @@ if __name__ == "__main__":
                         weather["wind"],
                         weather["condition"],
                         weather["visibility"],
-                        dt
+                        dt,
+                        dt.date(),
                     ))
     
     except requests.exceptions.RequestException as e:
