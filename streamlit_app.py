@@ -602,4 +602,4 @@ st.markdown("""
 ⚙️ *Data Pipeline:* Ingested via GitHub Actions → Processed with dbt → Visualized in Streamlit  
 📍 *Project Repository:* [DeutscheBahnalytics on GitHub](https://github.com/hemantsirsat/DeutscheBahnalytics)
 """)
-st.markdown("The data collection began on 04.11.2025 around 01:00 CET (+01:00 UTC). The results are updated every 30 minutes.")
+st.markdown("The data collection began on 12.11.2025 around 19:00 CET (+01:00 UTC). The numbers are updated every 30 minutes.")
